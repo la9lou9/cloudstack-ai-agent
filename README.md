@@ -98,6 +98,29 @@ python -m cloudstack_agent.mcp_server
 Point `command` at the virtualenv's Python if needed, and use the same
 environment variables as the CLI.
 
+## Chat UI (demo without an LLM)
+
+![Chat UI](docs/screenshot.png)
+
+```bash
+pip install -r requirements.txt
+python -m cloudstack_agent.web
+# open http://127.0.0.1:8080
+```
+
+The page uses a CloudStack-inspired palette and works immediately with the
+mock backend:
+
+- no API key required — a deterministic demo responder answers health, host,
+  VM, system VM, alert and drift questions;
+- the sidebar shows live health (hosts, system VMs, alerts, zones);
+- "Check drift vs contract" renders the drift report;
+- it switches to the real LangGraph agent automatically when a provider key
+  is present, or force it with `CLOUDSTACK_AGENT_USE_LLM=always`.
+
+The server binds to `127.0.0.1` by default and has no authentication — keep it
+local, or put it behind your own auth/proxy if you expose it.
+
 ## Run the agent
 
 Install a provider package and pick a model:
@@ -185,6 +208,9 @@ cloudstack-agent/
     tools/read.py          read-only, typed tool functions
     tools/write.py         opt-in write tools with confirmation guard
     drift.py               contract vs live CloudStack drift detector
+    demo_chat.py           deterministic replies used by the web UI
+    web.py                 FastAPI chat UI server
+    web_static/            HTML/CSS/JS chat interface
     mcp_server.py          MCP adapter (FastMCP / MCPServer)
     agent/graph.py         LangGraph ReAct loop over MCP tools
     cli.py                 --check and natural-language CLI
@@ -207,6 +233,7 @@ CloudStack, no LLM, no network.
 - [x] LangGraph agent + CLI
 - [x] Write tools behind confirmation
 - [x] Drift detector: compare a `deployment.yaml` contract with live state
+- [x] FastAPI chat UI with a no-LLM demo mode
 - [ ] MCP resources/prompts (instead of tools only)
 - [ ] Persistent checkpointer (SQLite/Postgres) + audit log
 - [ ] Integration tests against a real CloudStack lab

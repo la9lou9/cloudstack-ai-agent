@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CloudStack AI Agent</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="brand">
+          <span class="logo" aria-hidden="true">
+            <svg viewBox="0 0 64 64" role="img">
+              <defs>
+                <linearGradient id="cloudGradient" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#18a0e8" />
+                  <stop offset="100%" stop-color="#0b5d9e" />
+                </linearGradient>
+              </defs>
+              <path
+                d="M20 46h27a11 11 0 0 0 1.2-21.9A16 16 0 0 0 17.6 21 12.5 12.5 0 0 0 20 46Z"
+                fill="url(#cloudGradient)"
+              />
+              <path d="M23 51h20" stroke="#f29b38" stroke-width="4" stroke-linecap="round" />
+            </svg>
+          </span>
+          <div class="brand-text">
+            <h1>CloudStack AI Agent</h1>
+            <p>Pilot your private cloud in plain language</p>
+          </div>
+        </div>
+        <div class="badges">
+          <span id="mode-badge" class="badge">…</span>
+          <span id="source-badge" class="badge badge-muted">…</span>
+          <span id="write-badge" class="badge badge-warn hidden">write enabled</span>
+        </div>
+      </header>
+
+      <main class="layout">
+        <aside class="sidebar">
+          <section class="card">
+            <div class="card-head">
+              <h2>Cloud health</h2>
+              <button id="refresh-health" class="icon-btn" title="Refresh health" aria-label="Refresh health">↻</button>
+            </div>
+            <div class="stats" id="stats">
+              <div class="stat skeleton"></div>
+              <div class="stat skeleton"></div>
+              <div class="stat skeleton"></div>
+              <div class="stat skeleton"></div>
+            </div>
+            <div id="issues" class="issues">
+              <p class="muted">Loading…</p>
+            </div>
+            <button id="run-drift" class="btn btn-primary btn-block">Check drift vs contract</button>
+          </section>
+
+          <section class="card">
+            <h2>Ask me</h2>
+            <div class="chips">
+              <button class="chip" data-q="Is my cloud healthy?">Is my cloud healthy?</button>
+              <button class="chip" data-q="Which VMs are stopped?">Which VMs are stopped?</button>
+              <button class="chip" data-q="How are the system VMs?">System VMs status</button>
+              <button class="chip" data-q="Which hosts are close to full?">Host capacity</button>
+              <button class="chip" data-q="Show the drift against the deployment contract">Drift vs contract</button>
+            </div>
+          </section>
+
+          <section class="card meta-card">
+            <h2>About</h2>
+            <p class="muted small">
+              Read-only by default. Write actions are disabled unless explicitly enabled, and
+              always require confirmation.
+            </p>
+            <p class="muted small">
+              <a href="https://github.com/la9lou9/cloudstack-ai-agent" target="_blank" rel="noreferrer">
+                github.com/la9lou9/cloudstack-ai-agent
+              </a>
+            </p>
+          </section>
+        </aside>
+
+        <section class="chat card" aria-label="Chat">
+          <div class="chat-head">
+            <div>
+              <h2>Assistant</h2>
+              <p class="muted small" id="chat-subtitle">MCP tools + LangGraph</p>
+            </div>
+            <span class="status-dot" id="status-dot" title="Ready"></span>
+          </div>
+
+          <div class="messages" id="messages" aria-live="polite">
+            <div class="msg assistant">
+              <div class="avatar">CS</div>
+              <div class="bubble">
+                <p>Hi — I can inspect your CloudStack cloud.</p>
+                <p class="muted">Try one of the suggestions, or ask about VMs, hosts, system VMs, alerts or drift.</p>
+              </div>
+            </div>
+          </div>
+
+          <form id="chat-form" class="composer">
+            <textarea
+              id="input"
+              rows="1"
+              placeholder="Ask about your cloud… (Enter to send, Shift+Enter for a new line)"
+              autocomplete="off"
+            ></textarea>
+            <button type="submit" class="btn btn-primary" id="send-btn">Send</button>
+          </form>
+          <p class="disclaimer">Demo data is used when no CloudStack credentials are configured.</p>
+        </section>
+      </main>
+    </div>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>

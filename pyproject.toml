@@ -3,7 +3,7 @@ name = "cloudstack-agent"
 version = "0.1.0"
 description = "A LangGraph agent that manages Apache CloudStack in plain language, over a typed MCP server."
 requires-python = ">=3.11"
-dependencies = []
+dependencies = ["PyYAML>=6.0"]
 
 [project.optional-dependencies]
 # The MCP server alone (read-only tool layer over CloudStack).
@@ -15,6 +15,8 @@ agent = [
   "langchain>=0.3.0",
   "langchain-mcp-adapters>=0.1.0",
 ]
+# The web chat UI.
+web = ["fastapi>=0.115", "uvicorn>=0.30"]
 dev = ["pytest>=8.0"]
 
 [tool.pytest.ini_options]
