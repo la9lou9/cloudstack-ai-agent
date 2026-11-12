@@ -1,0 +1,70 @@
+apiVersion: v1
+deploymentId: dep-lab-demo
+tenantId: tenant-demo
+displayName: Lab demo
+
+hosts:
+  - name: mng-server
+    role: management
+    ip: 10.200.243.100
+    sshUser: root
+  - name: storage-server
+    role: storage
+    ip: 10.200.243.101
+    sshUser: root
+  - name: kvm1
+    role: hypervisor
+    ip: 10.200.243.102
+    sshUser: root
+    bridgeSlaveIface: eth0
+  - name: kvm2
+    role: hypervisor
+    ip: 10.200.243.103
+    sshUser: root
+    bridgeSlaveIface: eth0
+
+network:
+  gateway: 10.200.243.1
+  netmask: 255.255.255.0
+  cidr: 10.200.243.0/24
+  dns:
+    - 8.8.8.8
+    - 8.8.4.4
+  publicVlanTag: 100
+
+storage:
+  nfsPrimaryPath: /export/primary
+  nfsSecondaryPath: /export/secondary
+
+cloudstack:
+  version: "4.22"
+  zoneName: lab-zone
+  podName: lab-pod
+  clusterName: lab-cluster
+  networkType: Advanced
+  ipRanges:
+    pod:
+      startIp: 10.200.243.10
+      endIp: 10.200.243.19
+    guest:
+      startIp: 10.200.243.20
+      endIp: 10.200.243.39
+    public:
+      startIp: 10.200.243.40
+      endIp: 10.200.243.49
+    storage:
+      startIp: 10.200.243.50
+      endIp: 10.200.243.59
+
+security:
+  sshHardening: false
+  firewallMode: lab
+
+provisioning:
+  mode: ssh
+
+secrets:
+  refs:
+    - mysqlRootPassword
+    - kvmRootPassword
+    - sshPrivateKey

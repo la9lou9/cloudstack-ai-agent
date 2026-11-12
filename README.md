@@ -36,6 +36,7 @@ pip install -r requirements-dev.txt   # or just: pip install pytest (core uses s
 
 # Mock mode is the default when credentials are missing.
 python -m cloudstack_agent.cli --check
+python -m cloudstack_agent.drift --contract examples/deployment.yaml
 pytest -q
 ```
 
@@ -113,13 +114,48 @@ python -m cloudstack_agent.cli "which VMs are stopped, and why did the console p
 The agent loads its tools from the MCP server over stdio, so it uses exactly
 the same tool contract as any other MCP client.
 
+## Drift detector (contract vs reality)
+
+The detector compares one `deployment.yaml` contract with the live state of
+the one CloudStack zone that contract owns. It is read-only and returns a
+report plus an exit code:
+
+```bash
+python -m cloudstack_agent.drift --contract examples/deployment.yaml
+python -m cloudstack_agent.drift --contract examples/deployment.yaml --json
+```
+
+```
+DRIFT DETECTED — tenant-demo / dep-lab-demo (zone lab-zone, id zone-1)
+17 checks, 1 error(s), 0 warning(s)
+  ✘ system_vm_not_running: system VM 'v-2-VM' (consoleproxy) is Starting, not Running
+```
+
+(The mock data deliberately contains one unhealthy system VM so the demo
+shows a real finding. Point `--contract` at a matching/clean contract, or
+adjust the mock, to get `NO DRIFT`.)
+
+Exit code `0` = no drift, `1` = drift, `2` = bad contract/path. It checks
+zones, pods, clusters, hosts, system VMs, IP ranges, public VLAN, storage
+pools and the CloudStack version.
+
+**Scope / multi-client:** every resource query is filtered by the zone id
+resolved from the contract, and resources are matched inside that zone only.
+One contract = one tenant + one deployment + one zone, so two clients with
+the same names cannot be mixed. For stronger isolation, tag CloudStack
+resources with `deploymentId` (or use a CloudStack domain/account per tenant).
+
+Set `CLOUDSTACK_AGENT_CONTRACT_DIR` to restrict which contract files the MCP
+tool is allowed to read.
+
 ## Tools
 
 **Read-only (always available)**
 
 `list_zones`, `list_hosts`, `list_virtual_machines`, `get_virtual_machine`,
 `list_system_vms`, `list_networks`, `list_alerts`, `list_events`,
-`list_templates`, `list_service_offerings`, `list_volumes`, `cloud_health`
+`list_templates`, `list_service_offerings`, `list_volumes`, `cloud_health`,
+`drift_report`
 
 **Write (opt-in via `CLOUDSTACK_AGENT_ALLOW_WRITE=true`, and `confirm=true`)**
 
@@ -148,7 +184,8 @@ cloudstack-agent/
     cloudstack/client.py   stdlib CloudStack client + signing + mock fixtures
     tools/read.py          read-only, typed tool functions
     tools/write.py         opt-in write tools with confirmation guard
-    mcp_server.py          MCP adapter (FastMCP)
+    drift.py               contract vs live CloudStack drift detector
+    mcp_server.py          MCP adapter (FastMCP / MCPServer)
     agent/graph.py         LangGraph ReAct loop over MCP tools
     cli.py                 --check and natural-language CLI
   tests/                   client, tools, write guard, config
@@ -169,8 +206,8 @@ CloudStack, no LLM, no network.
 - [x] MCP server (read-only)
 - [x] LangGraph agent + CLI
 - [x] Write tools behind confirmation
+- [x] Drift detector: compare a `deployment.yaml` contract with live state
 - [ ] MCP resources/prompts (instead of tools only)
-- [ ] Drift detector: compare a `deployment.yaml` contract with live state
 - [ ] Persistent checkpointer (SQLite/Postgres) + audit log
 - [ ] Integration tests against a real CloudStack lab
 

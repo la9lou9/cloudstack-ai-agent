@@ -142,11 +142,26 @@ _MOCK_RESPONSES: dict[str, dict[str, Any]] = {
     },
     "listHosts": {
         "listhostsresponse": {
-            "count": 3,
+            "count": 4,
             "host": [
+                {
+                    "id": "host-0",
+                    "name": "mng-server",
+                    "ipaddress": "10.200.243.100",
+                    "state": "Up",
+                    "resourcestate": "Enabled",
+                    "type": "Routing",
+                    "zoneid": "zone-1",
+                    "zonename": "lab-zone",
+                    "cputotal": 3200,
+                    "cpuused": 900,
+                    "memorytotal": 17179869184,
+                    "memoryused": 4294967296,
+                },
                 {
                     "id": "host-1",
                     "name": "kvm1",
+                    "ipaddress": "10.200.243.102",
                     "state": "Up",
                     "resourcestate": "Enabled",
                     "type": "Routing",
@@ -160,6 +175,7 @@ _MOCK_RESPONSES: dict[str, dict[str, Any]] = {
                 {
                     "id": "host-2",
                     "name": "kvm2",
+                    "ipaddress": "10.200.243.103",
                     "state": "Up",
                     "resourcestate": "Enabled",
                     "type": "Routing",
@@ -173,6 +189,7 @@ _MOCK_RESPONSES: dict[str, dict[str, Any]] = {
                 {
                     "id": "host-3",
                     "name": "storage-server",
+                    "ipaddress": "10.200.243.101",
                     "state": "Up",
                     "resourcestate": "Enabled",
                     "type": "Storage",
@@ -180,6 +197,116 @@ _MOCK_RESPONSES: dict[str, dict[str, Any]] = {
                     "zonename": "lab-zone",
                 },
             ],
+        }
+    },
+    "listPods": {
+        "listpodsresponse": {
+            "count": 1,
+            "pod": [
+                {
+                    "id": "pod-1",
+                    "name": "lab-pod",
+                    "zoneid": "zone-1",
+                    "zonename": "lab-zone",
+                    "gateway": "10.200.243.1",
+                    "netmask": "255.255.255.0",
+                }
+            ],
+        }
+    },
+    "listClusters": {
+        "listclustersresponse": {
+            "count": 1,
+            "cluster": [
+                {
+                    "id": "cluster-1",
+                    "name": "lab-cluster",
+                    "zoneid": "zone-1",
+                    "zonename": "lab-zone",
+                    "hypervisortype": "KVM",
+                }
+            ],
+        }
+    },
+    "listVlanIpRanges": {
+        "listvlaniprangesresponse": {
+            "count": 4,
+            "vlaniprange": [
+                {
+                    "id": "range-pod",
+                    "zoneid": "zone-1",
+                    "podid": "pod-1",
+                    "startip": "10.200.243.10",
+                    "endip": "10.200.243.19",
+                    "gateway": "10.200.243.1",
+                    "netmask": "255.255.255.0",
+                    "forvirtualnetwork": False,
+                    "vlan": "untagged",
+                },
+                {
+                    "id": "range-guest",
+                    "zoneid": "zone-1",
+                    "podid": "pod-1",
+                    "startip": "10.200.243.20",
+                    "endip": "10.200.243.39",
+                    "gateway": "10.200.243.1",
+                    "netmask": "255.255.255.0",
+                    "forvirtualnetwork": False,
+                    "vlan": "untagged",
+                },
+                {
+                    "id": "range-public",
+                    "zoneid": "zone-1",
+                    "startip": "10.200.243.40",
+                    "endip": "10.200.243.49",
+                    "gateway": "10.200.243.1",
+                    "netmask": "255.255.255.0",
+                    "forvirtualnetwork": True,
+                    "vlan": "100",
+                },
+                {
+                    "id": "range-storage",
+                    "zoneid": "zone-1",
+                    "podid": "pod-1",
+                    "startip": "10.200.243.50",
+                    "endip": "10.200.243.59",
+                    "gateway": "10.200.243.1",
+                    "netmask": "255.255.255.0",
+                    "forvirtualnetwork": False,
+                    "vlan": "untagged",
+                },
+            ],
+        }
+    },
+    "listStoragePools": {
+        "liststoragepoolsresponse": {
+            "count": 2,
+            "storagepool": [
+                {
+                    "id": "pool-1",
+                    "name": "primary-1",
+                    "path": "/export/primary",
+                    "type": "Primary",
+                    "state": "Up",
+                    "zoneid": "zone-1",
+                    "zonename": "lab-zone",
+                },
+                {
+                    "id": "pool-2",
+                    "name": "secondary-1",
+                    "path": "/export/secondary",
+                    "type": "Secondary",
+                    "state": "Up",
+                    "zoneid": "zone-1",
+                    "zonename": "lab-zone",
+                },
+            ],
+        }
+    },
+    "listCapabilities": {
+        "listcapabilitiesresponse": {
+            "cloudstackversion": "4.22.0.0",
+            "apiVersion": "4.22.0.0",
         }
     },
     "listVirtualMachines": {

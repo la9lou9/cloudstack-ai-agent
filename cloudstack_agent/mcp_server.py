@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from . import drift as drift_tools
 from . import tools
 from .config import load_settings
 
@@ -107,6 +108,15 @@ def list_volumes() -> list[dict[str, Any]]:
 def cloud_health() -> dict[str, Any]:
     """Summarise cloud health: hosts, system VMs, alerts and capacity issues."""
     return tools.read.cloud_health()
+
+
+@mcp.tool()
+def drift_report(contract_path: str, zone_id: str | None = None) -> dict[str, Any]:
+    """Compare a deployment YAML contract with live CloudStack state.
+
+    Set CLOUDSTACK_AGENT_CONTRACT_DIR to restrict which paths may be read.
+    """
+    return drift_tools.detect_drift_from_path(contract_path, zone_id=zone_id)
 
 
 def _register_write_tools() -> None:
