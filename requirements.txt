@@ -1,0 +1,14 @@
+# MCP server + LangGraph agent.
+# The core tool layer (cloudstack_agent/cloudstack, cloudstack_agent/tools)
+# uses only the Python standard library, so it can be tested before these
+# are installed.
+mcp>=1.2.0
+langgraph>=0.2.0
+langchain>=0.3.0
+langchain-mcp-adapters>=0.1.0
+python-dotenv>=1.0
+
+# Model provider — install the one you use, e.g.:
+# langchain-openai>=0.2.0
+# langchain-anthropic>=0.2.0
+# langchain-google-genai>=2.0.0

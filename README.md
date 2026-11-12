@@ -1,0 +1,181 @@
+# CloudStack AI Agent
+
+A LangGraph agent that manages **Apache CloudStack** in plain language.
+
+```
+LangGraph agent  →  MCP client  →  CloudStack MCP server  →  CloudStack API
+```
+
+The agent never calls CloudStack directly and never runs shell commands. It
+only sees a small, typed set of tools exposed over the
+[Model Context Protocol](https://modelcontextprotocol.io). That split is the
+whole design:
+
+- **the MCP server** is the only component that talks to CloudStack;
+- **the agent** decides which tools to call and explains the result;
+- **safety** (read-only default, write opt-in, confirmation) lives in the
+  tool layer, not in a prompt.
+
+## Why two layers?
+
+| Layer | Testable alone | Reusable | Safety |
+|---|---|---|---|
+| MCP server | Yes — no LLM needed | Any MCP client (Claude, Cursor, …) | Allowlist + confirmation in one place |
+| LangGraph agent | Yes — mock tools/LLM | Can change model/provider freely | Cannot call a tool that is not exposed |
+
+Building the MCP server first also means there is something useful to demo
+before any model/API key is involved: `--check` prints a real health summary
+from the built-in mock data.
+
+## Quickstart (no CloudStack, no LLM)
+
+```bash
+cd cloudstack-agent
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements-dev.txt   # or just: pip install pytest (core uses stdlib)
+
+# Mock mode is the default when credentials are missing.
+python -m cloudstack_agent.cli --check
+pytest -q
+```
+
+`--check` returns something like:
+
+```json
+{
+  "healthy": false,
+  "zones": {"total": 1, "names": ["lab-zone"]},
+  "hosts": {"total": 3, "down": 0},
+  "system_vms": {"total": 2, "unhealthy": 1},
+  "alerts": {"total": 1, "warning": 1, "critical": 0},
+  "issues": [
+    "System VM v-2-VM (consoleproxy) is Starting, not Running",
+    "WARNING alert: Storage pool near capacity on host-3",
+    "Host kvm2 CPU at 90.6%"
+  ]
+}
+```
+
+## Connect to a real CloudStack
+
+```bash
+cp .env.example .env
+# fill in CLOUDSTACK_URL / CLOUDSTACK_API_KEY / CLOUDSTACK_SECRET_KEY
+# and set CLOUDSTACK_MOCK=false
+```
+
+`.env` is loaded automatically when `python-dotenv` is installed (it is in
+`requirements.txt`); otherwise export the variables yourself.
+
+The client signs requests with CloudStack's classic API signature
+(sorted + URL-encoded params, lowercased canonical string, HMAC-SHA1,
+base64). Set `CLOUDSTACK_VERIFY_TLS=false` only for a lab with a self-signed
+certificate.
+
+## Run the MCP server
+
+```bash
+python -m cloudstack_agent.mcp_server
+```
+
+### Claude Desktop / Cursor
+
+```json
+{
+  "mcpServers": {
+    "cloudstack": {
+      "command": "python",
+      "args": ["-m", "cloudstack_agent.mcp_server"],
+      "env": {
+        "CLOUDSTACK_MOCK": "true"
+      }
+    }
+  }
+}
+```
+
+Point `command` at the virtualenv's Python if needed, and use the same
+environment variables as the CLI.
+
+## Run the agent
+
+Install a provider package and pick a model:
+
+```bash
+pip install langchain-openai
+export OPENAI_API_KEY=...
+export CLOUDSTACK_AGENT_MODEL=openai:gpt-4o-mini
+
+python -m cloudstack_agent.cli "is my cloud healthy?"
+python -m cloudstack_agent.cli "which VMs are stopped, and why did the console proxy fail?"
+```
+
+The agent loads its tools from the MCP server over stdio, so it uses exactly
+the same tool contract as any other MCP client.
+
+## Tools
+
+**Read-only (always available)**
+
+`list_zones`, `list_hosts`, `list_virtual_machines`, `get_virtual_machine`,
+`list_system_vms`, `list_networks`, `list_alerts`, `list_events`,
+`list_templates`, `list_service_offerings`, `list_volumes`, `cloud_health`
+
+**Write (opt-in via `CLOUDSTACK_AGENT_ALLOW_WRITE=true`, and `confirm=true`)**
+
+`start_virtual_machine`, `stop_virtual_machine`, `reboot_virtual_machine`
+
+Write tools are **not registered** in the MCP server unless the setting is
+enabled. Even then, a call without `confirm=true` only returns
+`confirmation_required`; it does not execute anything.
+
+## Safety model
+
+- Read-only by default.
+- Write tools are opt-in and per-call confirmed.
+- No free-form shell, no raw API calls from the model.
+- The agent never sees CloudStack credentials — only the MCP server does.
+- Outputs are compact, filtered views (not full API payloads), which also
+  keeps the model's context small.
+- Mock mode makes demos and tests deterministic.
+
+## Project layout
+
+```
+cloudstack-agent/
+  cloudstack_agent/
+    config.py              environment settings
+    cloudstack/client.py   stdlib CloudStack client + signing + mock fixtures
+    tools/read.py          read-only, typed tool functions
+    tools/write.py         opt-in write tools with confirmation guard
+    mcp_server.py          MCP adapter (FastMCP)
+    agent/graph.py         LangGraph ReAct loop over MCP tools
+    cli.py                 --check and natural-language CLI
+  tests/                   client, tools, write guard, config
+```
+
+## Tests
+
+```bash
+pytest -q
+```
+
+The core tests (client, tools, write guard, config) need only `pytest` — no
+CloudStack, no LLM, no network.
+
+## Status / roadmap
+
+- [x] Typed read-only tool layer + mock backend
+- [x] MCP server (read-only)
+- [x] LangGraph agent + CLI
+- [x] Write tools behind confirmation
+- [ ] MCP resources/prompts (instead of tools only)
+- [ ] Drift detector: compare a `deployment.yaml` contract with live state
+- [ ] Persistent checkpointer (SQLite/Postgres) + audit log
+- [ ] Integration tests against a real CloudStack lab
+
+## CV line
+
+> Built a LangGraph agent and an MCP server that manage Apache CloudStack in
+> natural language, with typed tool calls, a read-only default, human
+> confirmation for write actions, and a mock backend for deterministic tests.
